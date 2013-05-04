@@ -16,6 +16,28 @@ Ext.define('Sample.view.Viewport', {
 		flex: 1,
 	}],
 });
+Ext.define('Sample.view.Window', {
+	extend: 'Ext.window.Window',
+	width: 600,
+	height: 400,
+	layout: 'fit',
+	closable: true,
+	closeAction: 'hide',
+	plain: true,
+	modal: true,
+	title: 'Sample Window',
+	items: [{
+		xtype: 'panel',
+		title: 'sample',
+		bodyPadding: 10,
+		layout: 'fit',
+		items: [{
+			xtype: 'SampleList',
+			itemId: 'sampleList3',
+			title: 'List 3',
+		}]
+	}],
+});
 Ext.define('Sample.view.SampleList', {
 	extend: 'Ext.grid.Panel',
 	alias: 'widget.SampleList',
@@ -32,6 +54,7 @@ Ext.define('Sample.views', {
 	create: function() {
 		var views = {};
 		views.viewport = Ext.create('Sample.view.Viewport');
+		views.window = Ext.create('Sample.view.Window');
 		return views;
 	},
 });
