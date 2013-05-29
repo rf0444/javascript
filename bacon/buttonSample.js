@@ -1,26 +1,46 @@
 "use strict";
 $(function() {
-	var mkButton = function(f) {
+	var mkButton = function() {
 		var button = $("<button />").css({ width: "80px" });
 		var streams = {
 			clicked: button.asEventStream("click"),
 		};
+		return {
+			el: button,
+			streams: streams,
+			assignProperties: function(properties) {
+				properties.text.assign(function(text) { button.text(text); });
+			},
+		};
+	};
+	var mkContent = function(f) {
+		var b1 = mkButton();
+		var b2 = mkButton();
+		var streams = {
+			b1: b1.streams,
+			b2: b2.streams,
+		};
 		var properties = f(streams);
-		properties.text.assign(function(text) { button.text(text); });
-		return button;
-	};
-	var f1 = function(streams) {
+		b1.assignProperties(properties.b1);
+		b2.assignProperties(properties.b2);
+		var el = $("<div />").append(b1.el).append("　-　").append(b2.el);
 		return {
-			text: streams.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
+			el: el,
+			streams: streams,
+			properties: properties,
 		};
 	};
-	var f2 = function(streams) {
+	var f = function(streams) {
 		return {
-			text: streams.clicked.map(2).scan(1, function(a, b) { return a * b; }).toProperty(),
+			b1: {
+				text: streams.b2.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
+			},
+			b2: {
+				text: streams.b1.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
+			},
 		};
 	};
-	$("#content")
-		.append(mkButton(f1))
-		.append("　-　")
-		.append(mkButton(f2))
+	var content = mkContent(f);
+	$("#content").append(content.el);
+	window.content = content;
 });
