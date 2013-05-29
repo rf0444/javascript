@@ -1,14 +1,26 @@
 "use strict";
 $(function() {
-	var mkButton = function(property) {
+	var mkButton = function(f) {
 		var button = $("<button />").css({ width: "80px" });
-		property.assign(function(text) { button.text(text); });
+		var streams = {
+			clicked: button.asEventStream("click"),
+		};
+		var properties = f(streams);
+		properties.text.assign(function(text) { button.text(text); });
 		return button;
 	};
-	var p1 = Bacon.constant(0);
-	var p2 = Bacon.constant(0);
+	var f1 = function(streams) {
+		return {
+			text: streams.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
+		};
+	};
+	var f2 = function(streams) {
+		return {
+			text: streams.clicked.map(2).scan(1, function(a, b) { return a * b; }).toProperty(),
+		};
+	};
 	$("#content")
-		.append(mkButton(p1))
+		.append(mkButton(f1))
 		.append("　-　")
-		.append(mkButton(p2))
+		.append(mkButton(f2))
 });
