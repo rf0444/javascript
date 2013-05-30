@@ -52,13 +52,18 @@ $(function() {
 			properties: properties,
 		};
 	};
+	var logic = {
+		count: function(stream) {
+			return stream.map(1).scan(0, function(a, b) { return a + b; }).toProperty();
+		},
+	};
 	var app = mkApp(function(streams) {
 		var buttons = {
 			b1: {
-				text: streams.buttons.b2.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
+				text: logic.count(streams.buttons.b2.clicked),
 			},
 			b2: {
-				text: streams.buttons.b1.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
+				text: logic.count(streams.buttons.b1.clicked),
 			},
 		};
 		return {
