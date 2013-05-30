@@ -1,46 +1,70 @@
 "use strict";
 $(function() {
-	var mkButton = function() {
-		var button = $("<button />").css({ width: "80px" });
-		var streams = {
-			clicked: button.asEventStream("click"),
-		};
-		return {
-			el: button,
-			streams: streams,
-			assignProperties: function(properties) {
-				properties.text.assign(function(text) { button.text(text); });
-			},
-		};
+	var mkButton = {
+		streams: function() {
+			return {
+				clicked: new Bacon.Bus(),
+			};
+		},
+		view: function(properties, streams) {
+			var button = $("<button />").css({ width: "80px" });
+			properties.text.assign(function(text) { button.text(text); });
+			streams.clicked.plug(button.asEventStream("click"));
+			return {
+				el: button,
+				children: {},
+	 		};
+		},
 	};
-	var mkContent = function(f) {
-		var b1 = mkButton();
-		var b2 = mkButton();
-		var streams = {
-			b1: b1.streams,
-			b2: b2.streams,
-		};
+	var mkContent = {
+		streams: function() {
+			return {
+				buttons: {
+					b1: mkButton.streams(),
+					b2: mkButton.streams(),
+				},
+			};
+		},
+		view: function(properties, streams) {
+			var buttons = {
+				b1: mkButton.view(properties.buttons.b1, streams.buttons.b1),
+				b2: mkButton.view(properties.buttons.b2, streams.buttons.b2),
+			};
+			var el = $("<div />").attr("id", "content")
+				.append(buttons.b1.el)
+				.append("　-　")
+				.append(buttons.b2.el);
+			return {
+				el: el,
+				children: {
+					buttons: buttons,
+				},
+	 		};
+		},
+	};
+	var mkApp = function(f) {
+		var streams = mkContent.streams();
 		var properties = f(streams);
-		b1.assignProperties(properties.b1);
-		b2.assignProperties(properties.b2);
-		var el = $("<div />").append(b1.el).append("　-　").append(b2.el);
+		var view = mkContent.view(properties, streams);
 		return {
-			el: el,
+			view: view,
 			streams: streams,
 			properties: properties,
 		};
 	};
-	var f = function(streams) {
-		return {
+	var app = mkApp(function(streams) {
+		var buttons = {
 			b1: {
-				text: streams.b2.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
+				text: streams.buttons.b2.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
 			},
 			b2: {
-				text: streams.b1.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
+				text: streams.buttons.b1.clicked.map(1).scan(0, function(a, b) { return a + b; }).toProperty(),
 			},
 		};
-	};
-	var content = mkContent(f);
-	$("#content").append(content.el);
-	window.content = content;
+		return {
+			buttons: buttons,
+		};
+	});
+	$("body").append(app.view.el);
+	window.app = app;
 });
