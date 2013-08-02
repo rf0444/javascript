@@ -1,3 +1,4 @@
 *.swp
 *~
 isc/js/*.js
+isc/js/*.js.map

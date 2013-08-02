@@ -1,2 +1,3 @@
 -js ../js/hello.js
 -main hello.Main
+-debug

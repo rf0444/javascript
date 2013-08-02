@@ -45,7 +45,9 @@ extern class Bus<T> extends EventStream<T> {
 	public function push(x: T): Void;
 }
 class Bacons {
-	public static function bus<T>(bacon: Bacon): Bus<T> {
+	public static var Bacon: Bacon = untyped __js__("window.Bacon");
+	public static function bus<T>(): Bus<T> {
+		var bacon = Bacons.Bacon;
 		return untyped __js__("new bacon.Bus()");
 	}
 }
