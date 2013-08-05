@@ -1,25 +1,50 @@
 package hello;
 
 import lib.Bacon;
-import lib.Either;
-import lib.Maybe;
+
+import lib.isc.*;
 
 using lib.Functions;
-using lib.Either.Eithers;
-using lib.Maybe.Maybes;
 
 class Main {
 	static function main() {
-		trace(Either.Left(1).either(Functions.id, Functions.constant(10)));
-		trace(Maybes.wrap(1).maybe(0, Functions.id));
-		trace(Bacons.Bacon);
-		trace(Bacons.bus());
+		var s1 = Button.streams();
+		var s2 = Button.streams();
+		var s3 = Button.streams();
+		var p = function(s: Button.Streams, t) {
+			return s.clicked
+				.map(Functions.constant(1))
+				.scan(0, function(a, b) { return a + b; })
+				.map(Std.string)
+				.map(function(str) { return t + str; })
+			;
+		};
+		var p1 = p(s3, "header: ");
+		var p2 = p(s1, "nav: ");
+		var p3 = p(s2, "content: ");
+		var button = function(s, p, e: Dynamic) {
+			return Button.create({
+				streams: s,
+				properties: {
+					text: p,
+					disable: Bacons.Bacon.never().toProperty(),
+				},
+				extra: e,
+			});
+		};
+		var button1 = button(s1, p1, { width: "100%", height: "40px" });
+		var button2 = button(s2, p2, { width: "20%", height: "100%", showResizeBar: true });
+		var button3 = button(s3, p3, { width: "100%", height: "100%" });
 		
 		var isc: Dynamic = untyped __js__("window.isc");
-		trace(isc);
-		var button = isc.IButton.create({
-			title: "hello",
+		isc.VLayout.create({
+			width: "100%", height: "100%",
+			members: [
+				button1,
+				isc.HLayout.create({
+					members: [ button2, button3 ],
+				})
+			],
 		});
-		trace(button);
 	}
 }
