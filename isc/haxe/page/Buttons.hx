@@ -1,13 +1,12 @@
-package hello;
+package page;
 
 import lib.Bacon;
-
 import lib.isc.*;
 
 using lib.Functions;
 
-class Main {
-	static function main() {
+class Buttons {
+	public static function create(): Page {
 		var s1 = Button.streams();
 		var s2 = Button.streams();
 		var s3 = Button.streams();
@@ -37,8 +36,8 @@ class Main {
 		var button3 = button(s3, p3, { width: "100%", height: "100%" });
 		
 		var isc: Dynamic = untyped __js__("window.isc");
-		isc.VLayout.create({
-			width: "100%", height: "100%",
+		var view = isc.VLayout.create({
+			width: "100%", height: "100%", visibility: "hidden",
 			members: [
 				button1,
 				isc.HLayout.create({
@@ -46,5 +45,6 @@ class Main {
 				})
 			],
 		});
+		return { view: view, hashChange: Bacons.Bacon.never() };
 	}
 }
