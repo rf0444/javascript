@@ -3,10 +3,12 @@ package page;
 import lib.Bacon;
 import lib.isc.*;
 
+import page.Page;
+
 using lib.Functions;
 
 class Top {
-	public static function create(): Page {
+	public static function create(conf: PageConf): Page {
 		var mkButton = function(title) {
 			var s = Button.streams();
 			var button = Button.create({

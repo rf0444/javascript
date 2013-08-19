@@ -9,4 +9,8 @@ class Functions {
 	public static function constant<A, B>(x: A): B -> A {
 		return function(_) { return x; };
 	}
+	public static function notNull<A>(x: A): Bool { return x != null; }
+	public static function iterable<A>(itr: Iterator<A>): Iterable<A> {
+		return { iterator: function() { return itr; } };
+	}
 }

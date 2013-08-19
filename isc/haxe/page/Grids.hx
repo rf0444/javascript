@@ -3,6 +3,8 @@ package page;
 import lib.Bacon;
 import lib.isc.*;
 
+import page.Page;
+
 using lib.Functions;
 
 private typedef Directory = {
@@ -15,7 +17,8 @@ private typedef Element = {
 	status: String,
 }
 class Grids {
-	public static function create(): Page {
+	public static function create(conf: PageConf): Page {
+		conf.properties.params.log();
 		var directories = [
 			{ id: 1, parentId: null, name: "hoge" },
 			{ id: 2, parentId: 1, name: "hoge hoge" },
@@ -49,7 +52,7 @@ class Grids {
 		];
 		var directorySize = function(directory) {
 			var list = lists.get(directory.id);
-			return list == null ? 0 : list.length; 
+			return if (list == null) 0 else list.length; 
 		};
 		
 		var treeSelected: Bus<Directory> = Bacons.bus();
@@ -94,7 +97,7 @@ class Grids {
 		
 		treeSelected.assign(function(data) {
 			var list = lists.get(data.id);
-			listView.setData(list == null ? [] : list);
+			listView.setData(if (list == null) [] else list);
 			detailView.setData([]);
 		});
 		listSelected.assign(function(data) {
