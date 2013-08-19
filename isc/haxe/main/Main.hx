@@ -12,22 +12,25 @@ private typedef Conf = {
 }
 class Main {
 	public static function main() {
-		var top = page.Top.create();
 		var samples = {
+			top: page.Top.create(),
 			buttons: page.Buttons.create(),
+			grids: page.Grids.create(),
 		};
 		var pages = createTabs({
 			contents: [
-				"/samples/top" => top.view,
+				"/samples/top" => samples.top.view,
 				"/samples/buttons" => samples.buttons.view,
+				"/samples/grids" => samples.grids.view,
 			],
 			defaultContent: "/samples/top",
 			stream: lib.jquery.Hash.changed(),
 		});
 		lib.jquery.Hash.assignTo(
 			Bacons.Bacon.mergeAll([
-				top.hashChange,
+				samples.top.hashChange,
 				samples.buttons.hashChange,
+				samples.grids.hashChange,
 				pages.redirect,
 			]).toProperty()
 		);

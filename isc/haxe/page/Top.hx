@@ -7,28 +7,36 @@ using lib.Functions;
 
 class Top {
 	public static function create(): Page {
-		var button = function(s, p, e: Dynamic) {
-			return Button.create({
+		var mkButton = function(title) {
+			var s = Button.streams();
+			var button = Button.create({
 				streams: s,
 				properties: {
-					text: p,
+					text: Bacons.Bacon.constant("-> " + title),
 					disable: Bacons.Bacon.never().toProperty(),
 				},
-				extra: e,
+				extra: { width: "100%", height: "80px" },
 			});
+			return {
+				streams: s,
+				button: button,
+			};
 		};
-		var s1 = Button.streams();
-		var button1 = button(s1, Bacons.Bacon.constant("-> button sample"), { width: "100%", height: "80px" });
-		
+		var samples = {
+			button: mkButton("button sample"),
+			grid: mkButton("tree / grid sample"),
+		};
 		var isc: Dynamic = untyped __js__("window.isc");
 		var view = isc.VLayout.create({
 			width: "100%", height: "100%", visibility: "hidden",
 			members: [
-				button1,
+				samples.button.button,
+				samples.grid.button,
 			],
 		});
 		var hash = Bacons.Bacon.mergeAll([
-			s1.clicked.map(Functions.constant("/samples/buttons")),
+			samples.button.streams.clicked.map(Functions.constant("/samples/buttons")),
+			samples.grid.streams.clicked.map(Functions.constant("/samples/grids")),
 		]);
 		return { view: view, hashChange: hash };
 	}
