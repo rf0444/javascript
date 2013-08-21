@@ -15,6 +15,7 @@ extern class Bacon {
 	public function zipWith<A, B, C>(f: A -> B -> C, x: Observable<A>, y: Observable<B>): EventStream<C>;
 }
 extern class Observable<T> {
+	@:overload(function(): Void -> Void {})
 	public function assign<R>(f: T -> R): Void -> Void;
 }
 extern class EventStream<T> extends Observable<T> {
@@ -35,6 +36,7 @@ extern class EventStream<T> extends Observable<T> {
 }
 extern class Property<T> extends Observable<T> {
 	public function changes(): EventStream<T>;
+	public function doAction<R>(f: T -> R): Property<T>;
 	public function filter(f: T -> Bool): Property<T>;
 	public function log(): Property<T>;
 	public function map<R>(f: T -> R): Property<R>;

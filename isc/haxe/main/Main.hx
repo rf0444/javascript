@@ -34,12 +34,10 @@ class Main {
 				var matched: Null<Array<String>> = untyped __js__("str.match(pattern)");
 				return matched;
 			};
-			// TODO
 			var create: PageConf -> Page = conf.contents.get(key);
 			var params: Bus<Array<String>> = Bacons.bus();
 			var sparams: EventStream<Array<String>> = params;
-			var pparams: Property<Array<String>> = sparams.toProperty();
-			var content: Page = create({ properties: { params: pparams } });
+			var content = create({ properties: { params: sparams.toProperty() } });
 			return { content: content, match: match, params: params };
 		});
 		var hashChanges = Bacons.Bacon.mergeAll(

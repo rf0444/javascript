@@ -13,4 +13,7 @@ class Functions {
 	public static function iterable<A>(itr: Iterator<A>): Iterable<A> {
 		return { iterator: function() { return itr; } };
 	}
+	public static function fix<A, B>(f: (A -> B) -> (A -> B)): A -> B {
+		return function(x) { return f(fix(f))(x); };
+	}
 }

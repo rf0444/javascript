@@ -5,6 +5,7 @@ import lib.isc.*;
 
 import page.Page;
 
+using Lambda;
 using lib.Functions;
 
 private typedef Directory = {
@@ -13,12 +14,13 @@ private typedef Directory = {
 	name: String,
 }
 private typedef Element = {
+	id: Int,
 	name: String,
 	status: String,
+	directoryId: Int,
 }
 class Grids {
 	public static function create(conf: PageConf): Page {
-		conf.properties.params.log();
 		var directories = [
 			{ id: 1, parentId: null, name: "hoge" },
 			{ id: 2, parentId: 1, name: "hoge hoge" },
@@ -30,36 +32,27 @@ class Grids {
 			{ id: 8, parentId: 3, name: "piyo piyo" },
 			{ id: 9, parentId: 1, name: "hoge xxx" },
 		];
-		var lists = [
-			1 => [
-				{ name: "hoge", status: "normal" },
-			],
-			3 => [],
-			4 => [
-				{ name: "aaa", status: "normal" },
-				{ name: "bbb", status: "error" },
-				{ name: "ccc", status: "normal" },
-				{ name: "ddd", status: "normal" },
-				{ name: "eee", status: "error" },
-			],
-			7 => [
-				{ name: "abcde", status: "normal" },
-				{ name: "fg", status: "normal" },
-			],
-			9 => [
-				{ name: "xxx", status: "error" },
-			],
-		];
-		var directorySize = function(directory) {
-			var list = lists.get(directory.id);
-			return if (list == null) 0 else list.length; 
-		};
+		var lists = createLists([
+			{ id: 1, name: "hoge", status: "normal", directoryId: 1 },
+			{ id: 2, name: "aaa", status: "normal", directoryId: 4 },
+			{ id: 3, name: "bbb", status: "error", directoryId: 4 },
+			{ id: 4, name: "ccc", status: "normal", directoryId: 4 },
+			{ id: 5, name: "ddd", status: "normal", directoryId: 4 },
+			{ id: 6, name: "eee", status: "error", directoryId: 4 },
+			{ id: 7, name: "abcde", status: "normal", directoryId: 7 },
+			{ id: 8, name: "fg", status: "normal", directoryId: 7 },
+			{ id: 9, name: "xxx", status: "error", directoryId: 9 },
+		]);
 		
 		var treeSelected: Bus<Directory> = Bacons.bus();
 		var listSelected: Bus<Element> = Bacons.bus();
 		
 		var isc: Dynamic = untyped __js__("window.isc");
-		var treeView = isc.TreeGrid.create({
+		var directorySize = function(directory) {
+			var list = lists.get(directory.id);
+			return if (list == null) 0 else list.length; 
+		};
+		var treeView: Dynamic = isc.TreeGrid.create({
 			data: isc.Tree.create({
 				modelType: "parent",
 				data: directories,
@@ -77,7 +70,7 @@ class Grids {
 			nodeIcon: "[SKIN]folder_open.png",
 			width: "100%", height: "100%"
 		});
-		var listView = isc.ListGrid.create({
+		var listView: Dynamic = isc.ListGrid.create({
 			fields: [
 				{ name: "name", title: "Name" },
 				{ name: "status", title: "Status" },
@@ -87,22 +80,54 @@ class Grids {
 			},
 			width: "100%", height: "100%",
 		});
-		var detailView = isc.ListGrid.create({
+		var detailView: Dynamic = isc.ListGrid.create({
 			fields: [
 				{ name: "name", title: "Name" },
 				{ name: "status", title: "Status" },
 			],
 			width: "100%", height: "100%",
 		});
-		
-		treeSelected.assign(function(data) {
-			var list = lists.get(data.id);
-			listView.setData(if (list == null) [] else list);
+		var expandAncestors = Functions.fix(function(rec) {
+			return function(tree: Directory) {
+				if (tree.parentId == null) {
+					return;
+				}
+				var parent: Directory = treeView.data.findById(tree.parentId);
+				treeView.openFolder(parent);
+				rec(parent);
+			};
+		});
+		var setList = function(list: List<Element>) {
+			listView.setData(if (list == null) [] else list.array());
 			detailView.setData([]);
-		});
-		listSelected.assign(function(data) {
-			detailView.setData([data]);
-		});
+		};
+		conf.properties.params.changes()
+			.map(function(params) { return params[1]; })
+			.filter(Functions.notNull)
+			.map(function(param) {
+				var ps = param.split("/");
+				var node = treeView.data.findById(ps[1]);
+				return { tree: node, list: ps[2] };
+			})
+			.filter(function(eles) { return eles.tree != null; })
+			.doAction(function(eles) {
+				var tree = eles.tree;
+				expandAncestors(tree);
+				treeView.selectSingleRecord(tree);
+				treeView.openFolder(tree);
+				setList(lists.get(tree.id));
+			})
+			.map(function(eles) {
+				var list = listView.data.find("id", eles.list);
+				return { tree: eles.tree, list: list };
+			})
+			.filter(function(eles) { return eles.list != null; })
+			.doAction(function(eles) {
+				listView.selectSingleRecord(eles.list);
+				detailView.setData([eles.list]);
+			})
+			.assign()
+		;
 		
 		var view = isc.HLayout.create({
 			width: "100%", height: "100%", visibility: "hidden",
@@ -126,6 +151,23 @@ class Grids {
 				}),
 			],
 		});
-		return { view: view, hashChange: Bacons.Bacon.never() };
+		var hash = Bacons.Bacon.mergeAll([
+			treeSelected.map(function(data) { return '/samples/grids/${data.id}'; }),
+			listSelected.map(function(data) { return '/samples/grids/${data.directoryId}/${data.id}'; }),
+		]);
+		return { view: view, hashChange: hash };
+	}
+	private static function createLists(eles: Array<Element>): Map<Int, List<Element>> {
+		var ret = new Map();
+		for (ele in eles) {
+			var key = ele.directoryId;
+			var list = ret.get(key);
+			if (list == null) {
+				list = new List();
+				ret.set(key, list);
+			}
+			list.add(ele);
+		}
+		return ret;
 	}
 }
