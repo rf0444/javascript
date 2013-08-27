@@ -44,8 +44,8 @@ class Grids {
 			{ id: 9, name: "xxx", status: "error", directoryId: 9 },
 		]);
 		
-		var treeSelected: Bus<Directory> = Bacons.bus();
-		var listSelected: Bus<Element> = Bacons.bus();
+		var treeClicked: Bus<Directory> = Bacons.bus();
+		var listClicked: Bus<Element> = Bacons.bus();
 		
 		var isc: Dynamic = untyped __js__("window.isc");
 		var directorySize = function(directory) {
@@ -58,7 +58,7 @@ class Grids {
 				data: directories,
 			}),
 			nodeClick: function(viewer, node) {
-				treeSelected.push(node);
+				treeClicked.push(node);
 			},
 			fields: [
 				{ name: "name", title: "Name" },
@@ -76,7 +76,7 @@ class Grids {
 				{ name: "status", title: "Status" },
 			],
 			recordClick: function(viewer, record) {
-				listSelected.push(record);
+				listClicked.push(record);
 			},
 			width: "100%", height: "100%",
 		});
@@ -101,7 +101,7 @@ class Grids {
 			listView.setData(if (list == null) [] else list.array());
 			detailView.setData([]);
 		};
-		conf.properties.params.changes()
+		var selection = conf.properties.params.changes()
 			.map(function(params) { return params[1]; })
 			.filter(Functions.notNull)
 			.map(function(param) {
@@ -109,8 +109,12 @@ class Grids {
 				var node = treeView.data.findById(ps[1]);
 				return { tree: node, list: ps[2] };
 			})
-			.filter(function(eles) { return eles.tree != null; })
 			.doAction(function(eles) {
+				if (eles.tree == null) {
+					treeView.deselectAllRecords();
+					listView.setData([]);
+					return;
+				}
 				var tree = eles.tree;
 				expandAncestors(tree);
 				treeView.selectSingleRecord(tree);
@@ -118,42 +122,116 @@ class Grids {
 				setList(lists.get(tree.id));
 			})
 			.map(function(eles) {
+				if (eles.tree == null) {
+					return { tree: eles.tree, list: null };
+				}
 				var list = listView.data.find("id", eles.list);
 				return { tree: eles.tree, list: list };
 			})
-			.filter(function(eles) { return eles.list != null; })
 			.doAction(function(eles) {
+				if (eles.list == null) {
+					listView.deselectAllRecords();
+					detailView.setData([]);
+					return;
+				}
 				listView.selectSingleRecord(eles.list);
 				detailView.setData([eles.list]);
 			})
-			.assign()
 		;
+		selection.assign();
 		
-		var view = isc.HLayout.create({
+		var toolbar = isc.RibbonBar.create({
+			membersMargin: 2,
+			layoutMargin: 2,
+		});
+		var iconButton = function(conf: Dynamic) {
+			var button = isc.IconButton.create(conf);
+			if (conf.properties != null) {
+				if (conf.properties.disabled) {
+					conf.properties.disabled.assign(function(disable) {
+						button.setDisabled(disable);
+					});
+				}
+			}
+			return button;
+		};
+		var treeEditDisabled = selection.map(function(eles) { return eles.tree == null; }).toProperty(true);
+		toolbar.addGroup(isc.RibbonGroup.create({
+			title: "Tree",
+			controls: [
+				iconButton({
+					title: "New", icon: "[SKIN]actions/add.png",
+				}),
+				iconButton({
+					title: "Edit", icon: "[SKIN]actions/edit.png",
+					properties: {
+						disabled: treeEditDisabled,
+					},
+				}),
+				iconButton({
+					title: "Delete", icon: "[SKIN]actions/remove.png",
+					properties: {
+						disabled: treeEditDisabled,
+					},
+				}),
+			],
+		}));
+		var listEditDisabled = selection.map(function(eles) { return eles.list == null; }).toProperty(true);
+		toolbar.addGroup(isc.RibbonGroup.create({
+			title: "List",
+			controls: [
+				iconButton({
+					title: "New", icon: "[SKIN]actions/add.png",
+					properties: {
+						disabled: treeEditDisabled,
+					},
+				}),
+				iconButton({
+					title: "Edit", icon: "[SKIN]actions/edit.png",
+					properties: {
+						disabled: listEditDisabled,
+					},
+				}),
+				iconButton({
+					title: "Delete", icon: "[SKIN]actions/remove.png",
+					properties: {
+						disabled: listEditDisabled,
+					},
+				}),
+			],
+		}));
+
+		var view = isc.VLayout.create({
 			width: "100%", height: "100%",
 			members: [
-				isc.VLayout.create({
-					width: "20%", height: "100%", showResizeBar: true,
-					members: [ treeView ],
-				}),
-				isc.VLayout.create({
-					width: "80%", height: "100%",
+				toolbar,
+				isc.HLayout.create({
+					width: "100%", height: "100%",
 					members: [
-						isc.HLayout.create({
-							width: "100%", height: "90%", showResizeBar: true,
-							members: [ listView ],
+						isc.VLayout.create({
+							width: "20%", height: "100%", showResizeBar: true,
+							members: [ treeView ],
 						}),
-						isc.HLayout.create({
-							width: "100%", height: "10%",
-							members: [ detailView ],
+						isc.VLayout.create({
+							width: "80%", height: "100%",
+							members: [
+								isc.HLayout.create({
+									width: "100%", height: "90%", showResizeBar: true,
+									members: [ listView ],
+								}),
+								isc.HLayout.create({
+									width: "100%", height: "10%",
+									members: [ detailView ],
+								}),
+							],
 						}),
 					],
 				}),
 			],
 		});
 		var hash = Bacons.Bacon.mergeAll([
-			treeSelected.map(function(data) { return '/samples/grids/${data.id}'; }),
-			listSelected.map(function(data) { return '/samples/grids/${data.directoryId}/${data.id}'; }),
+			treeClicked.map(function(data) { return '/samples/grids/${data.id}'; }),
+			listClicked.map(function(data) { return '/samples/grids/${data.directoryId}/${data.id}'; }),
 		]);
 		return { view: view, hashChange: hash };
 	}
