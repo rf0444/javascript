@@ -30,7 +30,7 @@ class Top {
 		};
 		var isc: Dynamic = untyped __js__("window.isc");
 		var view = isc.VLayout.create({
-			width: "100%", height: "100%", visibility: "hidden",
+			width: "100%", height: "100%",
 			members: [
 				samples.button.button,
 				samples.grid.button,

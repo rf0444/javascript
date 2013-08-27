@@ -68,7 +68,7 @@ class Grids {
 			],
 			folderIcon: "[SKIN]folder.png",
 			nodeIcon: "[SKIN]folder_open.png",
-			width: "100%", height: "100%"
+			width: "100%", height: "100%",
 		});
 		var listView: Dynamic = isc.ListGrid.create({
 			fields: [
@@ -130,7 +130,7 @@ class Grids {
 		;
 		
 		var view = isc.HLayout.create({
-			width: "100%", height: "100%", visibility: "hidden",
+			width: "100%", height: "100%",
 			members: [
 				isc.VLayout.create({
 					width: "20%", height: "100%", showResizeBar: true,

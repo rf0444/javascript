@@ -14,6 +14,9 @@ private typedef Conf = {
 }
 class Main {
 	public static function main() {
+		var isc: Dynamic = untyped __js__("window.isc");
+		isc.setAutoDraw(false);
+		
 		var location = lib.Location.streams();
 		var pages = createTabs({
 			contents: [
@@ -26,6 +29,7 @@ class Main {
 		});
 		lib.Location.assign({ properties: { hash: pages.hash }, streams: location });
 		lib.Location.forceHashChanged();
+		pages.view.draw();
 	}
 	static function createTabs(conf: Conf): Dynamic {
 		var contents = conf.contents.keys().iterable().map(function(key) {
