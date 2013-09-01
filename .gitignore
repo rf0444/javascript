@@ -2,3 +2,7 @@
 *~
 isc/js/*.js
 isc/js/*.js.map
+joo/js/*.js
+joo/ml/bin
+joo/ml/*.cmi
+joo/ml/*.cmo
