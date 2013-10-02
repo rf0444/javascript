@@ -23,6 +23,7 @@ class Main {
 				"/samples/top" => page.Top.create,
 				"/samples/buttons" => page.Buttons.create,
 				"/samples/grids(/.*)?" => page.Grids.create,
+				"/samples/biggrid" => page.BigGrid.create,
 			],
 			defaultContent: "/samples/top",
 			hash: location.hash,

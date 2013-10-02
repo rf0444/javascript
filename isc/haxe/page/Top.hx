@@ -27,6 +27,7 @@ class Top {
 		var samples = {
 			button: mkButton("button sample"),
 			grid: mkButton("tree / grid sample"),
+			bgrid: mkButton("big grid sample"),
 		};
 		var isc: Dynamic = untyped __js__("window.isc");
 		var view = isc.VLayout.create({
@@ -34,11 +35,13 @@ class Top {
 			members: [
 				samples.button.button,
 				samples.grid.button,
+				samples.bgrid.button,
 			],
 		});
 		var hash = Bacons.Bacon.mergeAll([
 			samples.button.streams.clicked.map(Functions.constant("/samples/buttons")),
 			samples.grid.streams.clicked.map(Functions.constant("/samples/grids")),
+			samples.bgrid.streams.clicked.map(Functions.constant("/samples/biggrid")),
 		]);
 		return { view: view, hashChange: hash };
 	}
